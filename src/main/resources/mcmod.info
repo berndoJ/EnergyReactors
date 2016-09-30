@@ -1,15 +1,15 @@
 [
     {
-        "modid": "CoFHCore",
-        "name": "CoFH Core",
-        "description": "Required for all CoFH Mods. Also provides some customization options for Minecraft.",
+        "modid": "energyreactors",
+        "name": "Energy Reactors",
+        "description": "Adds Redstone Flux reactors to the game.",
         "version": "${version}",
-        "credits": "Team CoFH",
-        "logoFile": "assets/cofh/textures/logo.png",
+        "credits": "jojo_1230, private7",
+        "logoFile": "",
         "mcversion": "${mcversion}",
-        "url": "http://www.teamcofh.com",
+        "url": "",
         "updateUrl": "",
-        "authorList": [ "Team CoFH" ],
+        "authorList": [ "jojo_1230", "private7" ],
         "parent": "",
         "screenshots": [],
         "dependencies": [

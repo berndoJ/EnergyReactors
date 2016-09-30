@@ -1,16 +1,19 @@
 [
-{
-  "modid": "examplemod",
-  "name": "Example Mod",
-  "description": "Example placeholder mod.",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
-  "url": "",
-  "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
-  "logoFile": "",
-  "screenshots": [],
-  "dependencies": []
-}
+    {
+        "modid": "CoFHCore",
+        "name": "CoFH Core",
+        "description": "Required for all CoFH Mods. Also provides some customization options for Minecraft.",
+        "version": "${version}",
+        "credits": "Team CoFH",
+        "logoFile": "assets/cofh/textures/logo.png",
+        "mcversion": "${mcversion}",
+        "url": "http://www.teamcofh.com",
+        "updateUrl": "",
+        "authorList": [ "Team CoFH" ],
+        "parent": "",
+        "screenshots": [],
+        "dependencies": [
+            "MinecraftForge"
+        ]
+    }
 ]

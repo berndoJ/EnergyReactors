@@ -5,11 +5,11 @@
  R4wk, ZeuX, IngisKahn, bspkrs
  MCP Data version : unknown
 ****************************
-:extractMcpData
+:extractMcpData UP-TO-DATE
 :getVersionJson
-:extractUserDev
+:extractUserDev UP-TO-DATE
 :genSrgs SKIPPED
-:extractNatives
+:extractNatives UP-TO-DATE
 :getAssetsIndex
 :getAssets
 :makeStart
@@ -30,11 +30,7 @@ Applying forge patches
 :recompMinecraft SKIPPED
 :repackMinecraft SKIPPED
 :setupDecompWorkspace
-:eclipseClasspath
-:eclipseJdt
-:eclipseProject
-:eclipse
 
 BUILD SUCCESSFUL
 
-Total time: 19.433 secs
+Total time: 14.114 secs

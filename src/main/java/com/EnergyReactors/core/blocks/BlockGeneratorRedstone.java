@@ -28,10 +28,7 @@ public class BlockGeneratorRedstone extends BlockContainer {
 		this.setCreativeTab(EnergyReactors.modTab);
 	}
 
-	@Override
-	public TileEntity createNewTileEntity(World world, int par2) {
-		return new TileEntityGeneratorRedstone();
-	}
+	
 	
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
@@ -41,13 +38,14 @@ public class BlockGeneratorRedstone extends BlockContainer {
 		return true;
 	}
 
+
+
 	@Override
-	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase entity, ItemStack stack) {
-		if (stack.hasDisplayName()) {
-			((TileEntityGeneratorRedstone) world.getTileEntity(x, y, z)).setCustomName(stack.getDisplayName());
-		}
-		super.onBlockPlacedBy(world, x, y, z, entity, stack);
+	public TileEntity createNewTileEntity(World world, int par1) {
+		return new TileEntityGeneratorRedstone();
 	}
+
+
 	
 	
 	

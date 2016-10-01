@@ -17,6 +17,7 @@ public class GuiHandler implements IGuiHandler {
 	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
 		switch(ID){
 		case GENERATOR_REDSTONE_ID:
+			System.out.println(x + " " + y + " " + z);
 			return new ContainerGeneratorRedstone(player.inventory, (TileEntityGeneratorRedstone) world.getTileEntity(x, y, z));
 		}
 		return null;

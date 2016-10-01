@@ -1,5 +1,7 @@
 package com.EnergyReactors.core.blocks;
 
+import com.EnergyReactors.core.container.slot.SlotGeneratorRedstone;
+
 import cofh.api.energy.IEnergyProvider;
 import net.minecraft.client.renderer.texture.ITickable;
 import net.minecraft.entity.player.EntityPlayer;
@@ -11,16 +13,19 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
-public class TileEntityGeneratorRedstone extends TileEntity implements IInventory, IEnergyProvider, ITickable {
+public class TileEntityGeneratorRedstone extends TileEntity implements IInventory, IEnergyProvider {
 
 	private ItemStack[] INVENTORY;
 	private String customName;
 	
 	private int inventorySlotSize = 1;
 	
-	private final int maxRF = 1000000;
+	private final static int maxRF = 100000;
 	private final int productionRF = 20;
-	private int currentRF;
+	private static int currentRF;
+	private final int burnTimeDust = 40; //In ticks
+	private final int burnTimeBlock = 360; //In ticks
+	private int currentBurnTime;
 	
 	public TileEntityGeneratorRedstone() {
 		this.INVENTORY = new ItemStack[this.getSizeInventory()];
@@ -44,7 +49,7 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	    if (index < 0 || index >= this.getSizeInventory())
 	        return null;
 	    return this.INVENTORY[index];
-	}
+	} 
 
 	@Override
 	public ItemStack decrStackSize(int index, int count) {
@@ -62,10 +67,8 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	            if (this.getStackInSlot(index).stackSize <= 0) {
 	                this.setInventorySlotContents(index, null);
 	            } else {
-	                //Just to show that changes happened
 	                this.setInventorySlotContents(index, this.getStackInSlot(index));
 	            }
-
 	            this.markDirty();
 	            return itemstack;
 	        }
@@ -119,21 +122,17 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 		return this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) == this && player.getDistanceSq(this.xCoord + 0.5, this.yCoord + 0.5, this.zCoord + 0.5) <= 64;
 	}
 
+	//Not Needed
 	@Override
-	public void openInventory() {
-		// TODO Auto-generated method stub
-	}
+	public void openInventory() {  }
+
+	//Not Needed
+	@Override
+	public void closeInventory() {  }
 
 	@Override
-	public void closeInventory() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isItemValidForSlot(int p_94041_1_, ItemStack p_94041_2_) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean isItemValidForSlot(int index, ItemStack itemstack) {
+		return SlotGeneratorRedstone.isItemValidForSlot(itemstack);
 	}
 	
 	public void clear(){
@@ -161,6 +160,8 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	        }
 	    }
 	    nbt.setTag("Items", list);
+	    nbt.setInteger("EnergyStored", this.currentRF);
+	    nbt.setInteger("CurrentBurnTime", this.currentBurnTime);
 
 	    if (this.hasCustomInventoryName()) {
 	        nbt.setString("CustomName", this.getCustomName());
@@ -178,6 +179,8 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	        int slot = stackTag.getByte("Slot") & 255;
 	        this.setInventorySlotContents(slot, ItemStack.loadItemStackFromNBT(stackTag));
 	    }
+	    currentRF = nbt.getInteger("EnergyStored");
+	    currentBurnTime = nbt.getInteger("CurrentBurnTime");
 
 	    if (nbt.hasKey("CustomName", 8)) {
 	        this.setCustomName(nbt.getString("CustomName"));
@@ -186,16 +189,20 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 
 	@Override
 	public boolean canConnectEnergy(ForgeDirection from) {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public int extractEnergy(ForgeDirection from, int maxExtract, boolean simulate) {
-		// TODO Auto-generated method stub
-		return 0;
+		if(currentRF >= maxExtract){
+			currentRF -= maxExtract;
+			return maxExtract;
+		} else {
+			currentRF = 0;
+			return currentRF;
+		}
 	}
-
+	
 	@Override
 	public int getEnergyStored(ForgeDirection from) {
 		return this.currentRF;
@@ -205,26 +212,46 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	public int getMaxEnergyStored(ForgeDirection from) {
 		return this.maxRF;
 	}
+	
+	public static int getMaxRF(){
+		return maxRF;
+	}
+	
+	public static int getCurrentRF(){
+		return currentRF;
+	}
 
-	@Override
+	/*@Override
 	public void tick() {
 		if(this.worldObj.isRemote){
 			generateRF();
 		}
-	}
+	}*/
 
 	private void generateRF() {
-		if(this.currentRF < this.maxRF){
-			if(this.currentRF <= (this.maxRF - this.productionRF)){
+		if(SlotGeneratorRedstone.isItemValidForSlot(this.getStackInSlot(0)) && this.currentBurnTime == 0){
+			if(!SlotGeneratorRedstone.isItemBlock){
+				this.currentBurnTime = this.burnTimeDust;
+			} else {
+				this.currentBurnTime = this.burnTimeBlock;
+			}
+			this.decrStackSize(0, 1);
+			this.markDirty();
+		}
+		if (this.currentBurnTime > 0){
+			this.currentBurnTime -= 1;
+			if(!(this.currentRF + this.productionRF > this.maxRF)){
 				this.currentRF += this.productionRF;
 			} else {
-				this.currentRF = this.maxRF;
-			}
+				this.currentRF = this.maxRF;			}
+			this.markDirty();
 		}
 	}	
 	
 	@Override
 	public void updateEntity() {
-		
+		if(this.worldObj.isRemote){
+			generateRF();
+		}
 	}
 }

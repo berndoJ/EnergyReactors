@@ -1,8 +1,10 @@
 package com.EnergyReactors.core.container;
 
 import com.EnergyReactors.core.blocks.TileEntityGeneratorRedstone;
+import com.EnergyReactors.core.container.slot.SlotGeneratorRedstone;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
@@ -15,7 +17,7 @@ public class ContainerGeneratorRedstone extends Container {
 	public ContainerGeneratorRedstone(IInventory playerInv, TileEntityGeneratorRedstone tileentity) {
 		this.tileentity = tileentity;
 		
-		this.addSlotToContainer(new Slot(tileentity, 0, 8, 17));
+		this.addSlotToContainer(new SlotGeneratorRedstone(tileentity, 0, 8, 17));
 
 		for (int y = 0; y < 3; ++y) {
 			for (int x = 0; x < 9; ++x) {
@@ -46,17 +48,17 @@ public class ContainerGeneratorRedstone extends Container {
 		        	if (!this.mergeItemStack(current, 1, this.inventorySlots.size(), true)){
 	                    		return null;
 	                	}
-		        } else {
+		        } else if (SlotGeneratorRedstone.isItemValidForSlot(current)) {
 		            if (!this.mergeItemStack(current, 0, 1, false))
 		                return null;
-		        }
+		        } else return null;
 
 		        if (current.stackSize == 0)
 		            slot.putStack((ItemStack) null);
 		        else
 		            slot.onSlotChanged();
-		    }
-		    return previous;
+		}
+		return previous;
 	}
 
 }

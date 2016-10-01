@@ -1,6 +1,7 @@
 package com.EnergyReactors.core.blocks;
 
 import cofh.api.energy.IEnergyProvider;
+import net.minecraft.client.renderer.texture.ITickable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
@@ -10,7 +11,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
-public class TileEntityGeneratorRedstone extends TileEntity implements IInventory, IEnergyProvider {
+public class TileEntityGeneratorRedstone extends TileEntity implements IInventory, IEnergyProvider, ITickable {
 
 	private ItemStack[] INVENTORY;
 	private String customName;
@@ -100,7 +101,7 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 
 	@Override
 	public String getInventoryName() {
-		return this.hasCustomInventoryName() ? this.customName : "container.GeneratorRedstone";
+		return "Redstone Generator";
 	}
 
 	@Override
@@ -197,13 +198,33 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 
 	@Override
 	public int getEnergyStored(ForgeDirection from) {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.currentRF;
 	}
 
 	@Override
 	public int getMaxEnergyStored(ForgeDirection from) {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.maxRF;
+	}
+
+	@Override
+	public void tick() {
+		if(this.worldObj.isRemote){
+			generateRF();
+		}
+	}
+
+	private void generateRF() {
+		if(this.currentRF < this.maxRF){
+			if(this.currentRF <= (this.maxRF - this.productionRF)){
+				this.currentRF += this.productionRF;
+			} else {
+				this.currentRF = this.maxRF;
+			}
+		}
 	}	
+	
+	@Override
+	public void updateEntity() {
+		
+	}
 }

@@ -6,6 +6,8 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 
 import com.EnergyReactors.core.blocks.BlockGeneratorRedstone;
+import com.EnergyReactors.core.blocks.TileEntityGeneratorRedstone;
+import com.EnergyReactors.handlers.GuiHandler;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
@@ -13,6 +15,7 @@ import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 /**
@@ -52,7 +55,8 @@ public class EnergyReactors {
     
     @EventHandler
     public void load(FMLInitializationEvent event) {
-    	
+    	NetworkRegistry.INSTANCE.registerGuiHandler(this.instance, new GuiHandler());
+    	GameRegistry.registerTileEntity(TileEntityGeneratorRedstone.class, "generator_redstone");
     }
     
     @EventHandler

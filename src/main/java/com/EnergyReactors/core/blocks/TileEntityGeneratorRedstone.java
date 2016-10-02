@@ -2,7 +2,10 @@ package com.EnergyReactors.core.blocks;
 
 import com.EnergyReactors.core.container.slot.SlotGeneratorRedstone;
 
+import cofh.api.energy.IEnergyHandler;
 import cofh.api.energy.IEnergyProvider;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.renderer.texture.ITickable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
@@ -10,6 +13,9 @@ import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -20,9 +26,9 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	
 	private int inventorySlotSize = 1;
 	
-	private final static int maxRF = 100000;
+	private final int maxRF = 100000;
 	private final int productionRF = 20;
-	private static int currentRF;
+	private int currentRF;
 	private final int burnTimeDust = 40; //In ticks
 	private final int burnTimeBlock = 360; //In ticks
 	private int currentBurnTime;
@@ -81,9 +87,9 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 
 	@Override
 	public ItemStack getStackInSlotOnClosing(int index) {
-		if (index < 0 || index >= this.getSizeInventory())
-	        return null;
-	    return this.INVENTORY[index];
+		if (INVENTORY[index] != null)
+	        return this.INVENTORY[index];
+	    return null;
 	}
 
 	@Override
@@ -148,8 +154,6 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	
 	@Override
 	public void writeToNBT(NBTTagCompound nbt) {
-	    super.writeToNBT(nbt);
-
 	    NBTTagList list = new NBTTagList();
 	    for (int i = 0; i < this.getSizeInventory(); ++i) {
 	        if (this.getStackInSlot(i) != null) {
@@ -162,17 +166,12 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	    nbt.setTag("Items", list);
 	    nbt.setInteger("EnergyStored", this.currentRF);
 	    nbt.setInteger("CurrentBurnTime", this.currentBurnTime);
-
-	    if (this.hasCustomInventoryName()) {
-	        nbt.setString("CustomName", this.getCustomName());
-	    }
+	    super.writeToNBT(nbt);
 	}
 
 
 	@Override
 	public void readFromNBT(NBTTagCompound nbt) {
-	    super.readFromNBT(nbt);
-
 	    NBTTagList list = nbt.getTagList("Items", 10);
 	    for (int i = 0; i < list.tagCount(); ++i) {
 	        NBTTagCompound stackTag = list.getCompoundTagAt(i);
@@ -181,10 +180,7 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 	    }
 	    currentRF = nbt.getInteger("EnergyStored");
 	    currentBurnTime = nbt.getInteger("CurrentBurnTime");
-
-	    if (nbt.hasKey("CustomName", 8)) {
-	        this.setCustomName(nbt.getString("CustomName"));
-	    }
+	    super.readFromNBT(nbt);
 	}
 
 	@Override
@@ -198,8 +194,20 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 			currentRF -= maxExtract;
 			return maxExtract;
 		} else {
+			int RFBefore = currentRF;
 			currentRF = 0;
-			return currentRF;
+			return RFBefore;
+		}
+	}
+	
+	public int extractEnergy(int maxExtract, boolean simulate){
+		if(currentRF >= maxExtract){
+			currentRF -= maxExtract;
+			return maxExtract;
+		} else {
+			int RFBefore = currentRF;
+			currentRF = 0;
+			return RFBefore;
 		}
 	}
 	
@@ -213,45 +221,75 @@ public class TileEntityGeneratorRedstone extends TileEntity implements IInventor
 		return this.maxRF;
 	}
 	
-	public static int getMaxRF(){
+	public int getMaxRF(){
 		return maxRF;
 	}
 	
-	public static int getCurrentRF(){
+	public int getCurrentRF(){
 		return currentRF;
 	}
-
-	/*@Override
-	public void tick() {
-		if(this.worldObj.isRemote){
-			generateRF();
-		}
-	}*/
+	
+	public int getProductionRate(){
+		return productionRF;
+	}
+	
+	public int getCurrentBurnTime(){
+		return currentBurnTime;
+	}
 
 	private void generateRF() {
-		if(SlotGeneratorRedstone.isItemValidForSlot(this.getStackInSlot(0)) && this.currentBurnTime == 0){
+		if(SlotGeneratorRedstone.isItemValidForSlot(this.getStackInSlot(0)) && this.currentBurnTime == 0 && !(this.currentRF == maxRF)){
 			if(!SlotGeneratorRedstone.isItemBlock){
 				this.currentBurnTime = this.burnTimeDust;
 			} else {
 				this.currentBurnTime = this.burnTimeBlock;
 			}
-			this.decrStackSize(0, 1);
-			this.markDirty();
+			this.INVENTORY[0].stackSize -= 1;
+			if(this.INVENTORY[0].stackSize == 0){
+				this.INVENTORY[0] = null;
+			}
 		}
 		if (this.currentBurnTime > 0){
 			this.currentBurnTime -= 1;
 			if(!(this.currentRF + this.productionRF > this.maxRF)){
 				this.currentRF += this.productionRF;
 			} else {
-				this.currentRF = this.maxRF;			}
-			this.markDirty();
+				this.currentRF = this.maxRF;
+			}
 		}
+		this.worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+		this.markDirty();
 	}	
 	
 	@Override
 	public void updateEntity() {
-		if(this.worldObj.isRemote){
-			generateRF();
+		if(!this.worldObj.isRemote){
+			this.generateRF();
+		}
+		this.pushEnergy();
+	}
+	
+	@Override
+	public Packet getDescriptionPacket() {
+		NBTTagCompound nbtTagCompound = new NBTTagCompound();
+		writeToNBT(nbtTagCompound);
+		int metadata = getBlockMetadata();
+		return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, metadata, nbtTagCompound);
+	}
+		
+	@Override
+	public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+		readFromNBT(pkt.func_148857_g());
+	}
+	
+	public void pushEnergy(){
+		if ((this.currentRF > 0)) {
+			for (int i = 0; i < 6; i++){
+				TileEntity tile = worldObj.getTileEntity(xCoord + ForgeDirection.getOrientation(i).offsetX, yCoord + ForgeDirection.getOrientation(i).offsetY, zCoord + ForgeDirection.getOrientation(i).offsetZ);
+				if (tile != null && tile instanceof IEnergyHandler) {
+					this.extractEnergy(((IEnergyHandler)tile).receiveEnergy(ForgeDirection.getOrientation(i).getOpposite(), 100, false), false);
+				}
+			}
 		}
 	}
 }

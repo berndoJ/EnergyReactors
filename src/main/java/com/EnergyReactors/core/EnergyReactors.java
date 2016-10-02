@@ -4,14 +4,17 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
+import net.minecraft.server.MinecraftServer;
 
 import com.EnergyReactors.core.blocks.BlockGeneratorRedstone;
 import com.EnergyReactors.core.blocks.TileEntityGeneratorRedstone;
+import com.EnergyReactors.core.proxies.CommonProxy;
 import com.EnergyReactors.handlers.GuiHandler;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
+import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -34,6 +37,10 @@ public class EnergyReactors {
 	//Instance of this Class if needed
 	@Instance(value=MODID)
 	public static EnergyReactors instance;
+	
+	//Add the Proxies
+	@SidedProxy(clientSide = "com.EnergyReactors.core.proxies.ClientProxy", serverSide = "com.EnergyReactors.core.proxies.CommonProxy")
+	public static CommonProxy proxy;
     
     //Creative Tab Field
     public static final CreativeTabs modTab = new CreativeTabs("tabEnergyReactors") {
@@ -50,13 +57,14 @@ public class EnergyReactors {
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-    	registerModBlocks();
+    	this.registerModBlocks();
     }
     
     @EventHandler
     public void load(FMLInitializationEvent event) {
+    	proxy.registerRenderers();
     	NetworkRegistry.INSTANCE.registerGuiHandler(this.instance, new GuiHandler());
-    	GameRegistry.registerTileEntity(TileEntityGeneratorRedstone.class, "generator_redstone");
+    	this.registerCorrespondingTileEntities();
     }
     
     @EventHandler
@@ -69,8 +77,15 @@ public class EnergyReactors {
     /**
      * Registers all Blocks added by the Mod.
      */
-    public void registerModBlocks(){
+    private void registerModBlocks(){
     	GameRegistry.registerBlock(blockGeneratorRedstone, "GeneratorRedstone");
+    }
+    
+    /**
+     * Registers all Tile Entities
+     */
+    private void registerCorrespondingTileEntities(){
+    	GameRegistry.registerTileEntity(TileEntityGeneratorRedstone.class, "generator_redstone");
     }
     
 

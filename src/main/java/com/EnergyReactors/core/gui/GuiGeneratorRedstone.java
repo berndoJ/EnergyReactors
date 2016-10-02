@@ -38,18 +38,36 @@ public class GuiGeneratorRedstone extends GuiContainer {
 		this.fontRendererObj.drawString(s, 88 - this.fontRendererObj.getStringWidth(s) / 2, 6, 4210752);
 		
 		GUIMouse mouse = new GUIMouse(width, height, xSize, ySize, mouseX, mouseY);
-		ProgressBar pBar = new ProgressBar(this.tileentity.getCurrentRF(), this.tileentity.getMaxRF(), ProgressBar.TOP_TO_BOTTOM);
 		
-		int progress = pBar.getProgressLevel(16, 60);
-		this.mc.getTextureManager().bindTexture(new ResourceLocation(EnergyReactors.MODID + ":textures/gui/container/gui_generator_redstone.png"));
-		this.drawTexturedModalRect(152, 17, 176, 59, 16, 60 - progress);
+		if(this.tileentity.getCurrentBurnTime() == 0){
+			this.fontRendererObj.drawString("RF/t: 0", 37, 23, 16777215);
+		} else {
+			this.fontRendererObj.drawString("RF/t: " + this.tileentity.getProductionRate(), 37, 23, 16777215);
+		}
+		this.fontRendererObj.drawString("Burn Time Left: " + (this.tileentity.getCurrentBurnTime() / 20) + "s", 37, 33, 16777215);
+		
+		if(this.tileentity.getCurrentRF() != 0){
+			this.mc.getTextureManager().bindTexture(new ResourceLocation(EnergyReactors.MODID + ":textures/gui/container/gui_generator_redstone.png"));
+			this.drawTexturedModalRect(152, 17, 176, 0, 16, 60 - getProgressLevel(60));
+		} else {
+			this.mc.getTextureManager().bindTexture(new ResourceLocation(EnergyReactors.MODID + ":textures/gui/container/gui_generator_redstone.png"));
+			this.drawTexturedModalRect(152, 17, 176, 0, 16, 60);
+		}
 		
 		if(mouse.getActualMouseX() >= 151 && mouse.getActualMouseX() <= 168 && mouse.getActualMouseY() >= 16 && mouse.getActualMouseY() <= 77){
 			List<String> hoverText = new ArrayList<String>();
 			hoverText.add(this.tileentity.getCurrentRF() + " RF/" + this.tileentity.getMaxRF() + " RF");
-			System.out.println(tileentity.xCoord + " " + tileentity.yCoord + " " + tileentity.zCoord);
 			this.drawHoveringText(hoverText, mouse.getActualMouseX(), mouse.getActualMouseY(), fontRendererObj);
 		}
 	}
-
+	
+	private int getProgressLevel(int progressIndicatorPixelHeight) {
+		int rf = this.tileentity.getCurrentRF();
+		int maxRF = this.tileentity.getMaxRF();
+		return maxRF != 0 && rf != 0 ? (rf * progressIndicatorPixelHeight) / maxRF : 0;
+	}
+	
+	private int getProgressPercent(){
+		return (this.tileentity.getCurrentRF() / this.tileentity.getMaxRF());
+	}
 }

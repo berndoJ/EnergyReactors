@@ -60,5 +60,13 @@ public class ContainerGeneratorRedstone extends Container {
 		}
 		return previous;
 	}
+	
+	@Override
+	public void detectAndSendChanges() {
+		super.detectAndSendChanges();
+		if(this.tileentity.getStackInSlot(0) != this.inventorySlots.get(0)){
+			
+		}
+	}
 
 }
